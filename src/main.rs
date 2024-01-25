@@ -1,4 +1,4 @@
-use network_flow_project::{Dinic, EdmondsKarp, Graph};
+use network_flow_project::{Dinic, EdmondsKarp, GomoryHuTree, Graph};
 use std::io;
 use std::time::Instant;
 
@@ -40,10 +40,23 @@ fn main() {
     println!("Time taken by Dinic algorithm: {:?}", duration_dinic);
 
     // Timing Edmonds-Karp algorithm
-    let mut edmonds_karp = EdmondsKarp::from_graph(graph); // Use EdmondsKarp here
+    let mut edmonds_karp = EdmondsKarp::from_graph(graph.clone()); // Use EdmondsKarp here
     let start = Instant::now();
     let max_flow_edmonds_karp = edmonds_karp.max_flow(source, sink);
     let duration_edmonds_karp = start.elapsed();
     println!("Maximum flow in Edmonds-Karp: {}", max_flow_edmonds_karp);
     println!("Time taken by Edmonds-Karp algorithm: {:?}", duration_edmonds_karp);
+
+
+    let mut gomory_hu_tree = GomoryHuTree::from_graph(&graph);
+    let start = Instant::now();
+    gomory_hu_tree.build_tree();
+    let duration_gomory_hu_tree = start.elapsed();
+    println!("Time taken to build Gomory-Hu tree: {:?}", duration_gomory_hu_tree);
+
+    let tree_edges = gomory_hu_tree.get_tree();
+    println!("Edges in the Gomory-Hu tree:");
+    for edge in tree_edges {
+        println!("{} -- {}", edge.u + 1, edge.v + 1);
+    }
 }

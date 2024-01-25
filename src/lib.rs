@@ -3,9 +3,9 @@ use std::collections::VecDeque;
 
 #[derive(Clone)]
 pub struct Edge {
-    to: usize,
-    rev: usize,
-    cap: i64,
+    pub to: usize,
+    pub rev: usize,
+    pub cap: i64,
 }
 
 #[derive(Clone)]
@@ -22,6 +22,27 @@ pub struct Dinic {
 pub struct EdmondsKarp {
     graph: Graph,
     parent: Vec<isize>,
+}
+
+#[derive(Clone, Debug)]
+pub struct TreeEdge {
+    pub u: usize,
+    pub v: usize,
+    pub w: i64,
+}
+
+#[derive(Clone)]
+pub struct FlowEdge {
+    pub to: usize,
+    pub rev: usize,
+    pub cap: i64,
+}
+
+pub struct GomoryHuTree {
+    pub graph: Vec<Vec<FlowEdge>>,
+    parent: Vec<usize>,
+    weight: Vec<i64>,
+    visited: Vec<bool>,
 }
 
 impl Graph {
@@ -44,6 +65,14 @@ impl Graph {
             cap: 0,
         });
     }
+
+    pub fn clear(&mut self) {
+        for edges in self.graph.iter_mut() {
+            for edge in edges.iter_mut() {
+                edge.cap = 0;
+            }
+        }
+    }
 }
 
 impl Dinic {
@@ -59,6 +88,10 @@ impl Dinic {
         let level = vec![0; v];
         let iter = vec![0; v];
         Dinic { graph, level, iter }
+    }
+
+    pub fn add_edge(&mut self, from: usize, to: usize, cap: i64) {
+        self.graph.add_edge(from, to, cap);
     }
 
     fn bfs(&mut self, s: usize) {
@@ -197,5 +230,124 @@ impl EdmondsKarp {
         }
 
         flow
+    }
+}
+
+impl GomoryHuTree {
+    pub fn new(n: usize) -> Self {
+        GomoryHuTree {
+            graph: vec![Vec::new(); n],
+            parent: vec![0; n],
+            weight: vec![0; n],
+            visited: vec![false; n],
+        }
+    }
+
+    pub fn add_edge(&mut self, u: usize, v: usize, w: i64) {
+        let rev_u = self.graph[v].len();
+        let rev_v = self.graph[u].len();
+        self.graph[u].push(FlowEdge { to: v, rev: rev_u, cap: w });
+        self.graph[v].push(FlowEdge { to: u, rev: rev_v, cap: 0 }); // reverse edge with 0 capacity
+    }
+
+    pub fn build_tree(&mut self) {
+        // finding out if the graph is big enough to use Dinic's algorithm
+        let mut using_dinic = false;
+        let mut num_edges = 0;
+        for edges in self.graph.iter() {
+            num_edges += edges.len();
+        }
+
+        if self.graph.len() > 1000 && num_edges > 2 * self.graph.len() {
+            using_dinic = true;
+        }
+
+        for u in 1..self.graph.len() {
+            let mut graph = Graph::new(self.graph.len());
+
+            for (from, edges) in self.graph.iter().enumerate() {
+                for edge in edges {
+                    graph.add_edge(from, edge.to, edge.cap);
+                }
+            }
+
+            if using_dinic {
+                // We will use Dinic's algorithm for large graphs.
+                let mut dinic = Dinic::from_graph(graph);
+
+                self.weight[u] = dinic.max_flow(u, self.parent[u]);
+                self.visited.iter_mut().for_each(|v| *v = false);
+                self.dfs(u, &dinic.graph);
+            } else {
+                // We will use Edmonds-Karp's algorithm for small graphs.
+                let mut edmonds_karp = EdmondsKarp::from_graph(graph);
+
+                self.weight[u] = edmonds_karp.max_flow(u, self.parent[u]);
+                self.visited.iter_mut().for_each(|v| *v = false);
+                self.dfs(u, &edmonds_karp.graph);
+            }
+
+            for v in u + 1..self.graph.len() {
+                if self.visited[v] && self.parent[v] == self.parent[u] {
+                    self.parent[v] = u;
+                }
+            }
+
+            if self.parent[self.parent[u]] != usize::MAX && self.visited[self.parent[self.parent[u]]] {
+                let pu = self.parent[u];
+                self.weight[u] = self.weight[pu];
+                self.parent[u] = self.parent[pu];
+                self.parent[pu] = u;
+            }
+        }
+    }
+
+    fn dfs(&mut self, u: usize, graph: &Graph) {
+        self.visited[u] = true;
+        for e in &graph.graph[u] {
+            if e.cap > 0 && !self.visited[e.to] {
+                self.dfs(e.to, graph);
+            }
+        }
+    }
+
+    pub fn get_tree(&self) -> Vec<TreeEdge> {
+        let mut tree = Vec::new();
+        for (i, &p) in self.parent.iter().enumerate() {
+            if p != usize::MAX {
+                tree.push(TreeEdge {
+                    u: i,
+                    v: p,
+                    w: self.weight[i],
+                });
+            }
+        }
+        tree
+    }
+
+    pub fn from_graph(graph: &Graph) -> Self {
+        let n = graph.graph.len();
+        let mut gomory_hu_tree = GomoryHuTree {
+            graph: vec![Vec::new(); n],
+            parent: vec![0; n],
+            weight: vec![0; n],
+            visited: vec![false; n],
+        };
+
+        // Convert the Graph to the format needed for GomoryHuTree.
+        for (from, edges) in graph.graph.iter().enumerate() {
+            for edge in edges {
+                if edge.cap > 0 {
+                    // Add edges with positive capacity to the GomoryHuTree graph.
+                    gomory_hu_tree.graph[from].push(FlowEdge {
+                        to: edge.to,
+                        rev: edge.rev,
+                        cap: edge.cap,
+                    });
+                }
+            }
+        }
+
+        gomory_hu_tree
     }
 }
