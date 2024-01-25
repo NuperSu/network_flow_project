@@ -251,6 +251,17 @@ impl GomoryHuTree {
     }
 
     pub fn build_tree(&mut self) {
+        // finding out if the graph is big enough to use Dinic's algorithm
+        let mut using_dinic = false;
+        let mut num_edges = 0;
+        for edges in self.graph.iter() {
+            num_edges += edges.len();
+        }
+
+        if self.graph.len() > 1000 && num_edges > 2 * self.graph.len() {
+            using_dinic = true;
+        }
+
         for u in 1..self.graph.len() {
             let mut graph = Graph::new(self.graph.len());
 
@@ -260,7 +271,7 @@ impl GomoryHuTree {
                 }
             }
 
-            if graph.graph.len() > 1000 {
+            if using_dinic {
                 // We will use Dinic's algorithm for large graphs.
                 let mut dinic = Dinic::from_graph(graph);
 
