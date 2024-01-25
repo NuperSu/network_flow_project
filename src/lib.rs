@@ -260,11 +260,21 @@ impl GomoryHuTree {
                 }
             }
 
-            let mut dinic = Dinic::from_graph(graph);
+            if graph.graph.len() > 1000 {
+                // We will use Dinic's algorithm for large graphs.
+                let mut dinic = Dinic::from_graph(graph);
 
-            self.weight[u] = dinic.max_flow(u, self.parent[u]);
-            self.visited.iter_mut().for_each(|v| *v = false);
-            self.dfs(u, &dinic.graph);
+                self.weight[u] = dinic.max_flow(u, self.parent[u]);
+                self.visited.iter_mut().for_each(|v| *v = false);
+                self.dfs(u, &dinic.graph);
+            } else {
+                // We will use Edmonds-Karp's algorithm for small graphs.
+                let mut edmonds_karp = EdmondsKarp::from_graph(graph);
+
+                self.weight[u] = edmonds_karp.max_flow(u, self.parent[u]);
+                self.visited.iter_mut().for_each(|v| *v = false);
+                self.dfs(u, &edmonds_karp.graph);
+            }
 
             for v in u + 1..self.graph.len() {
                 if self.visited[v] && self.parent[v] == self.parent[u] {

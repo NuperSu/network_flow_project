@@ -57,6 +57,6 @@ fn main() {
     let tree_edges = gomory_hu_tree.get_tree();
     println!("Edges in the Gomory-Hu tree:");
     for edge in tree_edges {
-        println!("{} -- {} (Weight: {})", edge.u + 1, edge.v + 1, edge.w);
+        println!("{} -- {}", edge.u + 1, edge.v + 1);
     }
 }
