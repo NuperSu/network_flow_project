@@ -1,5 +1,5 @@
 extern crate network_flow_project;
-use network_flow_project::{Dinic, Graph};
+use network_flow_project::{Dinic, EdmondsKarp, Graph};
 
 #[test]
 fn test_basic() {
@@ -9,8 +9,11 @@ fn test_basic() {
     graph.add_edge(0, 2, 10);
     graph.add_edge(2, 3, 10);
 
-    let mut dinic = Dinic::from_graph(graph);
+    let mut dinic = Dinic::from_graph(graph.clone());
     assert_eq!(dinic.max_flow(0, 3), 15);
+
+    let mut edmonds_karp = EdmondsKarp::from_graph(graph.clone());
+    assert_eq!(edmonds_karp.max_flow(0, 3), 15);
 }
 
 #[test]
@@ -20,8 +23,11 @@ fn test_no_path() {
     graph.add_edge(1, 2, 0); // no capacity
     graph.add_edge(2, 3, 10);
 
-    let mut dinic = Dinic::from_graph(graph);
+    let mut dinic = Dinic::from_graph(graph.clone());
     assert_eq!(dinic.max_flow(0, 3), 0);
+
+    let mut edmonds_karp = Dinic::from_graph(graph.clone());
+    assert_eq!(edmonds_karp.max_flow(0, 3), 0);
 }
 
 #[test]
@@ -38,8 +44,11 @@ fn test_multiple_paths() {
     graph.add_edge(4, 3, 7);
     graph.add_edge(4, 5, 4);
 
-    let mut dinic = Dinic::from_graph(graph);
+    let mut dinic = Dinic::from_graph(graph.clone());
     assert_eq!(dinic.max_flow(0, 5), 23);
+
+    let mut edmonds_karp = Dinic::from_graph(graph.clone());
+    assert_eq!(edmonds_karp.max_flow(0, 5), 23);
 }
 
 #[test]
@@ -48,8 +57,11 @@ fn test_disconnected_graph() {
     graph.add_edge(0, 1, 10);
     // No edge between 1 and 2 or 2 and 3
 
-    let mut dinic = Dinic::from_graph(graph);
+    let mut dinic = Dinic::from_graph(graph.clone());
     assert_eq!(dinic.max_flow(0, 3), 0);
+
+    let mut edmonds_karp = Dinic::from_graph(graph.clone());
+    assert_eq!(edmonds_karp.max_flow(0, 3), 0);
 }
 
 #[test]
@@ -58,8 +70,11 @@ fn test_large_capacity() {
     graph.add_edge(0, 1, i64::MAX);
     graph.add_edge(1, 2, i64::MAX);
 
-    let mut dinic = Dinic::from_graph(graph);
+    let mut dinic = Dinic::from_graph(graph.clone());
     assert_eq!(dinic.max_flow(0, 2), i64::MAX);
+
+    let mut edmonds_karp = Dinic::from_graph(graph.clone());
+    assert_eq!(edmonds_karp.max_flow(0, 2), i64::MAX);
 }
 
 #[test]
@@ -76,6 +91,9 @@ fn test_big_graph() {
         graph.add_edge(i, i + 2, max_capacity / 2);
     }
 
-    let mut dinic = Dinic::from_graph(graph);
+    let mut dinic = Dinic::from_graph(graph.clone());
     assert_eq!(dinic.max_flow(0, graph_size-1), max_capacity + max_capacity / 2);
+
+    let mut edmonds_karp = Dinic::from_graph(graph.clone());
+    assert_eq!(edmonds_karp.max_flow(0, graph_size-1), max_capacity + max_capacity / 2);
 }
