@@ -1,5 +1,5 @@
 [package]
-name = "network-flow-project"
+name = "network_flow_project"
 version = "0.1.0"
 edition = "2021"
 
