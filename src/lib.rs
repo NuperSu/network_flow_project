@@ -39,7 +39,7 @@ pub struct FlowEdge {
 }
 
 pub struct GomoryHuTree {
-    graph: Vec<Vec<FlowEdge>>,
+    pub graph: Vec<Vec<FlowEdge>>,
     parent: Vec<usize>,
     weight: Vec<i64>,
     visited: Vec<bool>,
